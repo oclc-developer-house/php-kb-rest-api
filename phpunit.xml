@@ -1,0 +1,7 @@
+<phpunit bootstrap="bootstrap.php">
+  <testsuites>
+    <testsuite name="OCLC WCKB">
+      <directory>tests</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>
