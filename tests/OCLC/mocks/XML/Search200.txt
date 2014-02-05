@@ -1,0 +1,44 @@
+HTTP/1.1 200 OK
+Date: Wed, 03 Nov 2010 20:18:59 GMT
+Server: Apache
+Status: 200
+Content-Type: application/atom+xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+    <title type="text">WorldCat KnowledgeBase Search: </title>
+    <updated>2014-02-05T18:45:35.347Z</updated>
+    <id>urn:uuid:5e5f48091e1ee36fd3efcc150fcc8b17</id>
+    <author>
+        <name>OCLC</name>
+    </author>
+    <link
+        href="http://worldcat.org/webservices/kb/rest/settings?search-type=search&amp;scope=my&amp;startIndex=1&amp;orderBy=title+asc&amp;institution_id=128807&amp;itemsPerPage=10"
+        rel="self"/>
+    <os:totalResults>1</os:totalResults>
+    <os:startIndex>1</os:startIndex>
+    <os:itemsPerPage>10</os:itemsPerPage>
+    <os:Query role="REQUEST"
+        searchTerms="search-type=search&amp;scope=my&amp;startIndex=1&amp;orderBy=title+asc&amp;institution_id=128807&amp;itemsPerPage=10"/>
+    <entry xmlns:kb="http://worldcat.org/kb">
+        <id>http://worldcat.org/webservices/kb/rest/settings/128807</id>
+        <link href="http://worldcat.org/webservices/kb/rest/settings/128807" rel="self"/>
+        <link href="http://worldcat.org/webservices/kb/rest/settings/128807.html" rel="alternate"/>
+        <title type="text">University of OCLC Test</title>
+        <kb:institution_name>University of OCLC Test</kb:institution_name>
+        <kb:institution_id>128807</kb:institution_id>
+        <kb:download_ip>123.45.67.89</kb:download_ip>
+        <kb:preferred_oclc_symbol>TRN</kb:preferred_oclc_symbol>
+        <kb:google_scholar_enabled>false</kb:google_scholar_enabled>
+        <kb:wcsync_enabled>false</kb:wcsync_enabled>
+        <kb:marcdelivery_enabled>false</kb:marcdelivery_enabled>
+        <kb:marcdelivery_no_delete>false</kb:marcdelivery_no_delete>
+        <kb:eswitch_enabled>true</kb:eswitch_enabled>
+        <kb:eswitch_eligible>false</kb:eswitch_eligible>
+        <kb:article_filter_enabled>false</kb:article_filter_enabled>
+        <kb:oclc_symbols>TRN</kb:oclc_symbols>
+        <kb:openaccess_in_resolver>journal proxy ebook</kb:openaccess_in_resolver>
+        <kb:selected_collections>16</kb:selected_collections>
+        <kb:galesiteid>oclc</kb:galesiteid>
+    </entry>
+</feed>

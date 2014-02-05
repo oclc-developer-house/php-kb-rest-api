@@ -53,8 +53,9 @@ Class Resource
 	public static $nsURL;
 	public static $supportedAuthenticationMethods = array('HMAC', 'AccessToken');
 
-	protected $wskey;
-	protected $accessToken = null;
+	//protected $wskey;
+	//protected $accessToken = null;
+	protected $authObject = null;
 	protected $user = null;
 
 	protected $id;
@@ -164,7 +165,7 @@ Class Resource
 		);
 			
 		if (in_array('HMAC', static::$supportedAuthenticationMethods) || in_array('AccessToken', static::$supportedAuthenticationMethods)){
-			self::buildAuthorizationHeader();
+			$this->authHeader = self::buildAuthorizationHeader($this->authObject, $this->method, $this->requestUrl, $this->user);
 			$this->headers['Authorization'] = $this->authHeader;
 		}
 
@@ -195,7 +196,7 @@ Class Resource
 		);
 
 		if (in_array('HMAC', static::$supportedAuthenticationMethods) || in_array('AccessToken', static::$supportedAuthenticationMethods)){
-			$search->setAuthHeader(static::buildAuthorizationHeader($whatObject, $search->getMethod(), $search->getRequestUrl()));
+			$search->setAuthHeader($search->buildAuthorizationHeader($search->getAuthObject(), $search->getMethod(), $search->getRequestUrl(), $search->getUser()));
 			$headers['Authorization'] = $search->getAuthHeader();
 		}
 
@@ -205,7 +206,7 @@ Class Resource
 				'mockResponseFilePath' => $search->getMockResponseFilePath()
 		);
 
-		return $search->parseSearchResponse(static::makeHTTPRequest($search->getMethod(), $search->getRequestUrl(), $search->getHeaders(), $httpOptions));
+		return $search->parseSearchResponse(static::makeHTTPRequest($search->getMethod(), $search->getRequestUrl(), $search->getHeaders(), $httpOptions), get_called_class());
 	}
 
 	/**
@@ -221,9 +222,9 @@ Class Resource
 	protected function parseOptions($options) {
 
 		if (isset($options['accessToken'])){
-			$this->accessToken = $options['accessToken'];
+			$this->authObject = $options['accessToken'];
 		}elseif (isset($options['wskey'])){
-			$this->wskey = $options['wskey'];
+			$this->authObject = $options['wskey'];
 		}
 
 		if (isset($options['user'])) {
@@ -316,21 +317,22 @@ Class Resource
 	 * @throws \Exception
 	 */
 
-	private function buildAuthorizationHeader()
+	public static function buildAuthorizationHeader($authObject, $method, $requestUrl, $user = null)
 	{
-		if (isset($this->accessToken)){
-			$this->authHeader = 'Bearer ' . $this->accessToken->getValue();
-			if (isset($this->user)){
-				$this->authHeader .= ', principalID="' . $this->user->getPrincipalID() . '", principalIDNS="' . $this->user->getPrincipalIDNS() . '"';
+		if (is_a($authObject, '\OCLC\Auth\AccessToken')){
+			$authHeader = 'Bearer ' . $authObject->getValue();
+			if (isset($user)){
+				$authHeader .= ', principalID="' . $this->user->getPrincipalID() . '", principalIDNS="' . $this->user->getPrincipalIDNS() . '"';
 			}
-		} elseif (isset($this->wskey)){
+		} elseif (is_a($authObject, '\OCLC\Auth\WSKey')){
 			$options = array(
-					'user' => $this->user
+					'user' => $user
 			);
-			$this->authHeader = $this->getHMACSignature($this->method, $this->requestUrl, $options);
+			$authHeader = $authObject->getHMACSignature($method, $requestUrl, $options);
 		} else {
-			Throw new \Exception('You must pass either a wskey or an accessToken Object in the options');
+			Throw new \Exception('You must pass either a wskey or an accessToken Object as the authObject');
 		}
+		return $authHeader;
 	}
 
 	/**
@@ -539,6 +541,3 @@ Class Resource
 		$this->doc = $doc;
 	}
 }
-
-
-
