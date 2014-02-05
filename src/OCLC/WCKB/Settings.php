@@ -8,7 +8,16 @@ class Settings extends \OCLC\Resource
     protected $data = array();
 
     public function __construct( $wskey, $institution_id ) {
-    	parent::__construct($institution_id, array("wskey" => $wskey));
+    	parent::__construct(
+    	  $institution_id, 
+    	  array(
+            "wskey" => $wskey,
+		    "service_url" => 'http://worldcat.org/webservices/kb/rest',
+		    "object_path" => '/settings',
+		    "dataURLsyntax" => false,
+		    "supportedAuthenticationMethods" => array('WSKeyLite')
+          )
+        );
     }
 
     public function getInstitutionId() {

@@ -11,6 +11,7 @@ class SettingsTest extends PHPUnit_Framework_TestCase {
         $settings = new Settings( 'abcdef', 123456 );
         $this->assertEquals( $settings->getInstitutionId(), 123456 );
         $this->assertEquals( $settings->getWskey(), 'abcdef' );
+        $this->assertAttributeNotEmpty( $settings, "responseBody");
         $this->assertCount( 0, $settings->getPropertyNames());
         return $settings;
     }

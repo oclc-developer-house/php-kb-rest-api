@@ -48,7 +48,8 @@ class ResourceTest extends PHPUnit_Framework_TestCase {
 		$this->assertAttributeNotEmpty('id', $resource);
 		$this->assertAttributeNotEmpty('atomTitle', $resource);
 		$this->assertAttributeNotEmpty('atomLink', $resource);
-		$this->assertAttributeNotEmpty('doc', $resource);
+		//based on the service that is called, this may or may not get set
+		//$this->assertAttributeNotEmpty('doc', $resource);
 	}
 	
 	public function testConstructorWithIDJSON() {
@@ -91,7 +92,8 @@ class ResourceTest extends PHPUnit_Framework_TestCase {
 		$this->assertAttributeNotEmpty('id', $resource);
 		$this->assertAttributeNotEmpty('atomTitle', $resource);
 		$this->assertAttributeNotEmpty('atomLink', $resource);
-		$this->assertAttributeNotEmpty('doc', $resource);
+		//based on the service that is called, this may or may not get set
+		//$this->assertAttributeNotEmpty('doc', $resource);
 	}
 	
 	public function testSearch(){
