@@ -28,7 +28,7 @@ Class Resource
 	 * @var \OCLC\User $user an /OCLC/User object which contains a valid principalID, principalIDNS and institution ID for a user
 	 * @var string $id
 	 * @var array $requestParameters
-	 * @var string $request_url
+	 * @var string $requestUrl
 	 * @var string $headers
 	 * @var string $acceptType
 	 * @var string $mockResponseFilePath
@@ -57,7 +57,7 @@ Class Resource
 	
 	protected $id;
 	protected $requestParameters;
-	protected $request_url;
+	protected $requestUrl;
 	protected $headers;
 	protected $acceptType = 'application/atom+xml';
 	protected $mockResponseFilePath;
@@ -155,7 +155,7 @@ Class Resource
 		 
 		$this->method = 'GET';
 	
-		$this->request_url = static::buildRequestURL(__FUNCTION__, $this->id, $this->requestParameters);
+		$this->requestUrl = static::buildRequestURL(__FUNCTION__, $this->id, $this->requestParameters);
 		 
 		$this->headers = array(
 				'Accept' => $this->acceptType
@@ -168,7 +168,7 @@ Class Resource
 	
 		$httpOptions = array('mockResponseFilePath' => $this->mockResponseFilePath);
 	
-		self::parseResponse(static::makeHTTPRequest($this->method, $this->request_url, $this->headers, $httpOptions));
+		self::parseResponse(static::makeHTTPRequest($this->method, $this->requestUrl, $this->headers, $httpOptions));
 		 
 	}
 	
@@ -186,15 +186,14 @@ Class Resource
 	public function search($options = null){
 		$search = new OCLCSearch($options);
 			
-		$search->setRequest_url(static::buildRequestURL(__FUNCTION__, null, $search->getRequestParameters()));
+		$search->setRequestUrl(static::buildRequestURL(__FUNCTION__, null, $search->getRequestParameters()));
 		
 		$headers = array(
 				'Accept' => $search->getAcceptType(),
 		);
 		
-		$search->setAuthHeader(static::buildAuthorizationHeader($whatObject, $method, $request_url));
-		
 		if (in_array('HMAC', static::$supportedAuthenticationMethods) || in_array('AccessToken', static::$supportedAuthenticationMethods)){
+			$search->setAuthHeader(static::buildAuthorizationHeader($whatObject, $search->getMethod(), $search->getRequestUrl()));
 			$headers['Authorization'] = $search->getAuthHeader();
 		}
 		
@@ -204,7 +203,7 @@ Class Resource
 				'mockResponseFilePath' => $search->getMockResponseFilePath()
 		);
 		
-		return $search->parseSearchResponse(static::makeHTTPRequest($search->getMethod(), $search->getRequest_url(), $search->getHeaders(), $httpOptions));
+		return $search->parseSearchResponse(static::makeHTTPRequest($search->getMethod(), $search->getRequestUrl(), $search->getHeaders(), $httpOptions));
 	}
 	
 	/**
@@ -254,17 +253,17 @@ Class Resource
 	 */
 	
 	private static function buildRequestURL($method, $id = null, $parameters = null, $action = null) {
-		$request_url = static::buildObjectController($method);
+		$requestUrl = static::buildObjectController($method);
 	
 		if (isset($id)) {
-			$request_url .= '/' . $id;
+			$requestUrl .= '/' . $id;
 		}
 		if (isset($action)) {
-			$request_url .= '/' . $action;
+			$requestUrl .= '/' . $action;
 		}
-		$request_url .= self::buildQuery($parameters);
+		$requestUrl .= self::buildQuery($parameters);
 	
-		return $request_url;
+		return $requestUrl;
 	}
 	
 	/**
@@ -277,14 +276,14 @@ Class Resource
 	private static function buildObjectController($method){
 		if (static::$dataURLsyntax){
 			if ($method == 'search') {
-				$request_url = static::$service_url . static::$object_path . '/search';
+				$requestUrl = static::$service_url . static::$object_path . '/search';
 			} else {
-				$request_url = static::$service_url . static::$object_path . '/data';
+				$requestUrl = static::$service_url . static::$object_path . '/data';
 			}
 		} else {
-			$request_url = static::$service_url . static::$object_path;
+			$requestUrl = static::$service_url . static::$object_path;
 		}
-		return $request_url;
+		return $requestUrl;
 		 
 	}
 	
@@ -326,7 +325,7 @@ Class Resource
 			$options = array(
 					'user' => $this->user
 			);
-			$this->authHeader = $this->wskey->getHMACSignature($this->method, $this->request_url, $options);
+			$this->authHeader = $this->wskey->getHMACSignature($this->method, $this->requestUrl, $options);
 		} else {
 			Throw new \Exception('You must pass either a wskey or an accessToken Object in the options');
 		}
@@ -335,13 +334,13 @@ Class Resource
 	/**
 	 * 
 	 * @param string $method
-	 * @param string $request_url
+	 * @param string $requestUrl
 	 * @param array $headers
 	 * @param array $options
 	 * @return \Guzzle\Http\Exception\BadResponseException
 	 */
 	
-	public static function makeHTTPRequest($method, $request_url, $headers, $options = null)
+	public static function makeHTTPRequest($method, $requestUrl, $headers, $options = null)
 	{   
 	    (isset($options['requestBody']) ? $requestBody = $options['requestBody'] : $requestBody = null);
 	    (isset($options['upload']) ? $upload = $options['upload'] : $upload = false);
@@ -368,13 +367,13 @@ Class Resource
 		}
 		
 		if ($method == 'POST' and $upload == true) {
-			$request = $client->post($request_url, $headers, array(
+			$request = $client->post($requestUrl, $headers, array(
 					'file_field' => $requestBody
 			));
 		} elseif ($method == 'POST' || $method =='PUT' || !empty($requestBody)) {
-			$request = $client->createRequest($method, $request_url, $headers, $requestBody);
+			$request = $client->createRequest($method, $requestUrl, $headers, $requestBody);
 		} else {
-			$request = $client->createRequest($method, $request_url, $headers);
+			$request = $client->createRequest($method, $requestUrl, $headers);
 		}
 		$request->getCurlOptions()->set(CURLOPT_SSL_VERIFYHOST, false);
 		$request->getCurlOptions()->set(CURLOPT_SSL_VERIFYPEER, false);
@@ -465,9 +464,9 @@ Class Resource
 			}
 		} else {
 			$errors = json_decode($this->responseBody);
-			$code = $errors[''];
-			$message = $errors[''];
-			$detail = $errors[''];
+			$this->errorCode = $errors['error'][0]['code'];
+			$this->errorMessage = $errors['error'][0]['message'];
+			$this->errorDetail = $errors['error'][0]['detail'];
 		}
 	}
 	
