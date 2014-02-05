@@ -2,24 +2,21 @@
 
 namespace OCLC\WCKB;
 
-class Settings
+class Settings extends \OCLC\Resource
 {
 
-    protected $wskey;
-    protected $institution_id;
     protected $data = array();
 
     public function __construct( $wskey, $institution_id ) {
-        $this->setWskey( $wskey );
-        $this->setInstitutionId( $institution_id );
+    	parent::__construct($institution_id, array("wskey" => $wskey));
     }
 
     public function getInstitutionId() {
-        return $this->institution_id;
+        return $this->id;
     }
 
     public function setInstitutionId( $institution_id ) {
-        $this->institution_id = $institution_id; 
+        $this->id = $institution_id; 
     }
 
     public function getWskey() {
