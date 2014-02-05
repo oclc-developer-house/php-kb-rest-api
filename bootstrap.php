@@ -1,4 +1,7 @@
 <?php
+require 'vendor/autoload.php';
+use Guzzle\Http\Client;
+
 
 spl_autoload_register( function( $class ) {
     $parts = explode( '\\', $class );
