@@ -32,8 +32,9 @@ class Search
 	 * @var string $errorDetail
 	 */
 	
-	protected $wskey = null;
-    protected $accessToken = null;
+	//protected $wskey;
+	//protected $accessToken = null;
+	protected $authObject = null;
     protected $user = null;
     
     protected $method = 'GET';
@@ -58,6 +59,39 @@ class Search
 	protected $errorCode = null;
 	protected $errorMessage = null;
 	protected $errorDetail = null;
+	
+	/**
+	 * Create standard getters and setters for all the properties
+	 *
+	 * @param string $method
+	 * @param array $params
+	 * @throws \Exception
+	 */
+	
+	public function __call($method, $params) {
+		if (strlen($method) > 4) {
+			$action = substr($method, 0, 3);
+			$property = strtolower(substr($method, 3, 1)) . substr($method, 4);
+			if ($action == 'get' && property_exists($this, $property)) {
+				return $this->$property;
+			}
+	
+			if ($action == 'set' && property_exists($this, $property)) {
+				if (in_array($property, static::$invalidFields)) {
+					Throw new \Exception('This field is not edittable.');
+				}
+				if (empty($params[0])) {
+					Throw new \Exception('You must send a valid ' . $property);
+				} else {
+					$this->$property = $params[0];
+					return;
+				}
+				throw new \Exception($method . ' missing required parameter');
+			}
+		} else {
+			throw new \Exception('Call to Undefined Method/Class Function');
+		}
+	}
 	
 	/**
 	 * 
@@ -105,24 +139,6 @@ class Search
 			$this->mockResponseFilePath = $options['mockResponseFilePath'];
 		}
 	
-	}
-	
-	public function buildAuthorizationHeader()
-	{
-		if (isset($this->accessToken)){
-			$authHeader = 'Bearer ' . $this->accessToken->getValue();
-			if (isset($this->user)){
-				$this->authHeader .= ', principalID="' . $this->user->getPrincipalID() . '", principalIDNS="' . $this->user->getPrincipalIDNS() . '"';
-			}
-		} elseif (isset($this->wskey)){
-			$options = array(
-					'user' => $this->user
-			);
-			$authHeader = $this->wskey->getHMACSignature($this->method, $this->request_url, $options);
-		} else {
-			Throw new Exception('You must pass either a wskey or an accessToken Object in the options');
-		}
-		return $authHeader;
 	}
 	
 	/**
