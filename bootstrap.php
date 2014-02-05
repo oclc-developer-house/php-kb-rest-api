@@ -2,7 +2,6 @@
 require 'vendor/autoload.php';
 use Guzzle\Http\Client;
 
-require('/Users/coombsk/Documents/workspace/code_libraries/oclc-auth.phar');
 spl_autoload_register( function( $class ) {
     $parts = explode( '\\', $class );
 
