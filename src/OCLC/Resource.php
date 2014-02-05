@@ -53,8 +53,8 @@ Class Resource
 	public static $nsURL;
 	public static $supportedAuthenticationMethods = array('HMAC', 'AccessToken');
 
-	//protected $wskey;
-	//protected $accessToken = null;
+	protected $wskey;
+	protected $accessToken = null;
 	protected $authObject = null;
 	protected $user = null;
 
@@ -222,8 +222,10 @@ Class Resource
 	protected function parseOptions($options) {
 
 		if (isset($options['accessToken'])){
+			$this->accessToken = $options['accessToken'];
 			$this->authObject = $options['accessToken'];
 		}elseif (isset($options['wskey'])){
+			$this->wskey = $options['wskey'];
 			$this->authObject = $options['wskey'];
 		}
 

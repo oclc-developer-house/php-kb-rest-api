@@ -32,8 +32,8 @@ class Search
 	 * @var string $errorDetail
 	 */
 	
-	//protected $wskey;
-	//protected $accessToken = null;
+	protected $wskey;
+	protected $accessToken = null;
 	protected $authObject = null;
     protected $user = null;
     
@@ -121,8 +121,10 @@ class Search
 	public function parseOptions($options) {
 		if (isset($options['accessToken'])){
 			$this->accessToken = $options['accessToken'];
+			$this->authObject = $options['accessToken'];
 		}elseif (isset($options['wskey'])){
 			$this->wskey = $options['wskey'];
+			$this->authObject = $options['wskey'];
 		}
 	
 		if (isset($options['user'])) {
