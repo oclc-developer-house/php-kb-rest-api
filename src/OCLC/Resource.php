@@ -133,7 +133,7 @@ Class Resource
 			self::parseOptions($options);
 		}
 		if (isset($this->id) and (isset($this->wskey) || isset($this->accessToken) || isset($this->requestParameters['wskey']))){
-			//self::get();
+			self::get();
 		}
 	}
 
