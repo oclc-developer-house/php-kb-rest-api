@@ -77,9 +77,6 @@ class Search
 			}
 	
 			if ($action == 'set' && property_exists($this, $property)) {
-				if (in_array($property, static::$invalidFields)) {
-					Throw new \Exception('This field is not edittable.');
-				}
 				if (empty($params[0])) {
 					Throw new \Exception('You must send a valid ' . $property);
 				} else {
@@ -158,7 +155,7 @@ class Search
 				$this->etag($etag);
 			}
 			// figure out if it is Atom or not based on namespaces
-			$results = simplexml_load_string($search->getResponseBody());
+			$results = simplexml_load_string($this->responseBody);
 			$namespaces = $results->getNamespaces(true);
 	
 			if (in_array('http://www.loc.gov/zing/srw/', $namespaces)) {
@@ -178,7 +175,7 @@ class Search
 	 * @param \SimpleXMLElement $results
 	 */
 	
-	protected function parseAtomFeed($results) {
+	protected function parseAtomFeed($results, $class) {
 		$results->registerXPathNamespace("atom", "http://www.w3.org/2005/Atom");
 		$results->registerXPathNamespace("os", "http://a9.com/-/spec/opensearch/1.1/");
 			
@@ -186,8 +183,7 @@ class Search
 		$entries = array();
 		foreach ($results->xpath('/atom:feed/atom:entry') as $entry) {
 			// create a new resource using class name
-			$class = get_called_class();
-			$resource = new $class;
+			$resource = new $class();
 			$resource->from_xml($entry->saveXML());
 			$entries[] = $resource;
 		}
@@ -221,12 +217,11 @@ class Search
 	 * @param \SimpleXMLElement $results
 	 */
 	
-	protected function parseSRUResponse($results, $search_response) {
+	protected function parseSRUResponse($results, $class) {
 		$results->registerXPathNamespace("sru", "http://www.loc.gov/zing/srw/");
 		// want an array of resource objects with their XML
 		$records = array();
 		foreach ($results->xpath('//sru:record/sru:recordData') as $record) {
-			$class = get_called_class();
 			$resource = new $class;
 			$resource->from_xml($record->saveXML());
 			$records[] = $resource;

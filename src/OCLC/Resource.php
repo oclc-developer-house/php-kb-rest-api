@@ -96,9 +96,6 @@ Class Resource
 			}
 
 			if ($action == 'set' && property_exists($this, $property)) {
-				if (in_array($property, static::$invalidFields)) {
-					Throw new \Exception('This field is not edittable.');
-				}
 				if (empty($params[0])) {
 					Throw new \Exception('You must send a valid ' . $property);
 				} else {
@@ -186,10 +183,11 @@ Class Resource
 	 * - mockResponseFilePath: the file path to a mock response you want to use for testing purposes
 	 */
 
-	public function search($options = null){
-		$search = new OCLCSearch($options);
-			
-		$search->setRequestUrl(static::buildRequestURL(__FUNCTION__, null, $search->getRequestParameters()));
+	public static function search($options = null){
+		$search = new Search($options);
+		
+		$requestUrl = static::buildRequestURL(__FUNCTION__, null, $search->getRequestParameters());
+		$search->setRequestUrl($requestUrl);
 
 		$headers = array(
 				'Accept' => $search->getAcceptType(),

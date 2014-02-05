@@ -97,6 +97,13 @@ class ResourceTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testSearch(){
+		$options = array(
+				'parameters' => array('wskey' => 'myKey', 'institution_id' => 128807),
+				'mockResponseFilePath' => __DIR__ . '/mocks/XML/Search200.txt'
+		);
+		$searchResults = Resource::search($options);
+		$this->assertAttributeEquals('http://worldcat.org/webservices/kb/rest/settings/search?wskey=myKey&institution_id=128807', 'requestUrl', $searchResults);
+		
 		
 	}
 	
