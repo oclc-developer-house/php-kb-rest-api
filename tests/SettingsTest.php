@@ -1,11 +1,13 @@
 <?php
 
+use OCLC\WCKB\Settings;
+
 class SettingsTest extends PHPUnit_Framework_TestCase {
 
     public function testConstructor() {
-        // Just checking to see if phpunit is working
-        $stack = array();
-        $this->assertEquals(0, count($stack));
+        $settings = new Settings( 'abcdef', 123456 );
+        $this->assertEquals( $settings->getInstitutionId(), 123456 );
+        $this->assertEquals( $settings->getWskey(), 'abcdef' );
     }
 
 }
