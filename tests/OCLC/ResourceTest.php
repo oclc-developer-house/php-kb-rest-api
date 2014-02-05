@@ -146,7 +146,7 @@ class ResourceTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals('myKey', $parameters['wskey']);
 		$this->assertEquals('128807', $parameters['institution_id']);
 	
-		$this->assertAttributeEquals('http://worldcat.org/webservices/kb/rest/settings?wskey=myKey&institution_id=128807', 'requestUrl', $searchResults);
+		$this->assertAttributeEquals('http://worldcat.org/webservices/kb/rest/settings?wskey=myKey&institution_id=128807&alt=json', 'requestUrl', $searchResults);
 		//make sure mockResponseFilePath is set
 		$this->assertAttributeEquals(__DIR__ . '/mocks/XML/Search200.txt', 'mockResponseFilePath', $searchResults);
 	
