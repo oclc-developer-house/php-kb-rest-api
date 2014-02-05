@@ -1,0 +1,35 @@
+HTTP/1.1 200 OK
+Date: Wed, 03 Nov 2010 20:18:59 GMT
+Server: Apache
+Status: 200
+Content-Type: application/json
+
+{
+    "title": "University of OCLC Test",
+    "id": "http://worldcat.org/webservices/kb/rest/settings/128807",
+    "links":     [
+                {
+            "href": "http://worldcat.org/webservices/kb/rest/settings/128807",
+            "rel": "self"
+        },
+                {
+            "href": "http://worldcat.org/webservices/kb/rest/settings/128807.html",
+            "rel": "alternate"
+        }
+    ],
+    "kb:institution_name": "University of OCLC Test",
+    "kb:institution_id": "128807",
+    "kb:download_ip": "123.45.67.89",
+    "kb:preferred_oclc_symbol": "TRN",
+    "kb:google_scholar_enabled": "false",
+    "kb:wcsync_enabled": "false",
+    "kb:marcdelivery_enabled": "false",
+    "kb:marcdelivery_no_delete": "false",
+    "kb:eswitch_enabled": "true",
+    "kb:eswitch_eligible": "false",
+    "kb:article_filter_enabled": "false",
+    "kb:oclc_symbols": "TRN",
+    "kb:openaccess_in_resolver": "ebook proxy journal",
+    "kb:selected_collections": "16",
+    "kb:galesiteid": "oclc"
+}
