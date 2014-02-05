@@ -133,7 +133,7 @@ Class Resource
 			self::parseOptions($options);
 		}
 		if (isset($this->id) and (isset($this->wskey) || isset($this->accessToken) || isset($this->requestParameters['wskey']))){
-			self::get();
+			//self::get();
 		}
 	}
 
@@ -327,7 +327,7 @@ Class Resource
 			$options = array(
 					'user' => $this->user
 			);
-			$this->authHeader = $this->wskey->getHMACSignature($this->method, $this->requestUrl, $options);
+			$this->authHeader = $this->getHMACSignature($this->method, $this->requestUrl, $options);
 		} else {
 			Throw new \Exception('You must pass either a wskey or an accessToken Object in the options');
 		}
