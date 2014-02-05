@@ -1,5 +1,7 @@
 <?php
 
+namespace OCLC;
+
 use Guzzle\Http\Client;
 use Guzzle\Plugin\History\HistoryPlugin;
 use Guzzle\Plugin\Mock\MockPlugin;
@@ -28,7 +30,7 @@ Class Resource
 	 * @var \OCLC\User $user an /OCLC/User object which contains a valid principalID, principalIDNS and institution ID for a user
 	 * @var string $id
 	 * @var array $requestParameters
-	 * @var string $requestUrl
+	 * @var string $request_url
 	 * @var string $headers
 	 * @var string $acceptType
 	 * @var string $mockResponseFilePath
@@ -57,7 +59,7 @@ Class Resource
 	
 	protected $id;
 	protected $requestParameters;
-	protected $requestUrl;
+	protected $request_url;
 	protected $headers;
 	protected $acceptType = 'application/atom+xml';
 	protected $mockResponseFilePath;
@@ -155,7 +157,7 @@ Class Resource
 		 
 		$this->method = 'GET';
 	
-		$this->requestUrl = static::buildRequestURL(__FUNCTION__, $this->id, $this->requestParameters);
+		$this->request_url = static::buildRequestURL(__FUNCTION__, $this->id, $this->requestParameters);
 		 
 		$this->headers = array(
 				'Accept' => $this->acceptType
@@ -168,7 +170,7 @@ Class Resource
 	
 		$httpOptions = array('mockResponseFilePath' => $this->mockResponseFilePath);
 	
-		self::parseResponse(static::makeHTTPRequest($this->method, $this->requestUrl, $this->headers, $httpOptions));
+		self::parseResponse(static::makeHTTPRequest($this->method, $this->request_url, $this->headers, $httpOptions));
 		 
 	}
 	
@@ -186,14 +188,15 @@ Class Resource
 	public function search($options = null){
 		$search = new OCLCSearch($options);
 			
-		$search->setRequestUrl(static::buildRequestURL(__FUNCTION__, null, $search->getRequestParameters()));
+		$search->setRequest_url(static::buildRequestURL(__FUNCTION__, null, $search->getRequestParameters()));
 		
 		$headers = array(
 				'Accept' => $search->getAcceptType(),
 		);
 		
+		$search->setAuthHeader(static::buildAuthorizationHeader($whatObject, $method, $request_url));
+		
 		if (in_array('HMAC', static::$supportedAuthenticationMethods) || in_array('AccessToken', static::$supportedAuthenticationMethods)){
-			$search->setAuthHeader(static::buildAuthorizationHeader($whatObject, $search->getMethod(), $search->getRequestUrl()));
 			$headers['Authorization'] = $search->getAuthHeader();
 		}
 		
@@ -203,7 +206,7 @@ Class Resource
 				'mockResponseFilePath' => $search->getMockResponseFilePath()
 		);
 		
-		return $search->parseSearchResponse(static::makeHTTPRequest($search->getMethod(), $search->getRequestUrl(), $search->getHeaders(), $httpOptions));
+		return $search->parseSearchResponse(static::makeHTTPRequest($search->getMethod(), $search->getRequest_url(), $search->getHeaders(), $httpOptions));
 	}
 	
 	/**
@@ -253,17 +256,17 @@ Class Resource
 	 */
 	
 	private static function buildRequestURL($method, $id = null, $parameters = null, $action = null) {
-		$requestUrl = static::buildObjectController($method);
+		$request_url = static::buildObjectController($method);
 	
 		if (isset($id)) {
-			$requestUrl .= '/' . $id;
+			$request_url .= '/' . $id;
 		}
 		if (isset($action)) {
-			$requestUrl .= '/' . $action;
+			$request_url .= '/' . $action;
 		}
-		$requestUrl .= self::buildQuery($parameters);
+		$request_url .= self::buildQuery($parameters);
 	
-		return $requestUrl;
+		return $request_url;
 	}
 	
 	/**
@@ -276,14 +279,14 @@ Class Resource
 	private static function buildObjectController($method){
 		if (static::$dataURLsyntax){
 			if ($method == 'search') {
-				$requestUrl = static::$service_url . static::$object_path . '/search';
+				$request_url = static::$service_url . static::$object_path . '/search';
 			} else {
-				$requestUrl = static::$service_url . static::$object_path . '/data';
+				$request_url = static::$service_url . static::$object_path . '/data';
 			}
 		} else {
-			$requestUrl = static::$service_url . static::$object_path;
+			$request_url = static::$service_url . static::$object_path;
 		}
-		return $requestUrl;
+		return $request_url;
 		 
 	}
 	
@@ -325,7 +328,7 @@ Class Resource
 			$options = array(
 					'user' => $this->user
 			);
-			$this->authHeader = $this->wskey->getHMACSignature($this->method, $this->requestUrl, $options);
+			$this->authHeader = $this->wskey->getHMACSignature($this->method, $this->request_url, $options);
 		} else {
 			Throw new \Exception('You must pass either a wskey or an accessToken Object in the options');
 		}
@@ -334,13 +337,13 @@ Class Resource
 	/**
 	 * 
 	 * @param string $method
-	 * @param string $requestUrl
+	 * @param string $request_url
 	 * @param array $headers
 	 * @param array $options
 	 * @return \Guzzle\Http\Exception\BadResponseException
 	 */
 	
-	public static function makeHTTPRequest($method, $requestUrl, $headers, $options = null)
+	public static function makeHTTPRequest($method, $request_url, $headers, $options = null)
 	{   
 	    (isset($options['requestBody']) ? $requestBody = $options['requestBody'] : $requestBody = null);
 	    (isset($options['upload']) ? $upload = $options['upload'] : $upload = false);
@@ -367,13 +370,13 @@ Class Resource
 		}
 		
 		if ($method == 'POST' and $upload == true) {
-			$request = $client->post($requestUrl, $headers, array(
+			$request = $client->post($request_url, $headers, array(
 					'file_field' => $requestBody
 			));
 		} elseif ($method == 'POST' || $method =='PUT' || !empty($requestBody)) {
-			$request = $client->createRequest($method, $requestUrl, $headers, $requestBody);
+			$request = $client->createRequest($method, $request_url, $headers, $requestBody);
 		} else {
-			$request = $client->createRequest($method, $requestUrl, $headers);
+			$request = $client->createRequest($method, $request_url, $headers);
 		}
 		$request->getCurlOptions()->set(CURLOPT_SSL_VERIFYHOST, false);
 		$request->getCurlOptions()->set(CURLOPT_SSL_VERIFYPEER, false);
@@ -464,9 +467,9 @@ Class Resource
 			}
 		} else {
 			$errors = json_decode($this->responseBody);
-			$this->errorCode = $errors['error'][0]['code'];
-			$this->errorMessage = $errors['error'][0]['message'];
-			$this->errorDetail = $errors['error'][0]['detail'];
+			$code = $errors[''];
+			$message = $errors[''];
+			$detail = $errors[''];
 		}
 	}
 	
