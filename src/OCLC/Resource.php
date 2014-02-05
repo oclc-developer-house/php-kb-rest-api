@@ -1,5 +1,7 @@
 <?php
 
+namespace OCLC;
+
 use Guzzle\Http\Client;
 use Guzzle\Plugin\History\HistoryPlugin;
 use Guzzle\Plugin\Mock\MockPlugin;

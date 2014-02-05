@@ -1,4 +1,7 @@
 <?php
+
+namespace OCLC;
+
 class Search
 {
 	/**
