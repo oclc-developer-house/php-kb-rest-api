@@ -35,7 +35,14 @@ class Settings
 	}
 
     public function getProperty( $var ) {
+    	if (!isset($this->data[$var])) {
+    		return null;
+    	}
         return $this->data[ $var ];
+    }
+    
+    public function getPropertyNames() {
+    	return array_keys($this->data);
     }
 
 }

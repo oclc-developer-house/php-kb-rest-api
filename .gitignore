@@ -1,5 +1,6 @@
-tests/phpunit.phar
+phpunit.phar
 mykey.txt
+test.php
 
 
 #################
