@@ -139,6 +139,12 @@ Class Resource
 	 * Get a Resource via HTTP
 	 * 
 	 * @param array $options
+	 * - wskey: an WSKey object with a key and secret
+	 * - accessToken: an AccessToken object
+	 * - user: a user object
+	 * - parameters: an array of query parameters
+	 * - acceptType: the media type to send in the HTTP Accept Header. eg. application/json, application/atom+xml
+	 * - mockResponseFilePath: the file path to a mock response you want to use for testing purposes
 	 */
 	
 	public function get($options = null)
@@ -167,8 +173,49 @@ Class Resource
 	}
 	
 	/**
+	 * 
+	 * @param array $options
+	 * - wskey: an WSKey object with a key and secret
+	 * - accessToken: an AccessToken object
+	 * - user: a user object
+	 * - parameters: an array of query parameters
+	 * - acceptType: the media type to send in the HTTP Accept Header. eg. application/json, application/atom+xml
+	 * - mockResponseFilePath: the file path to a mock response you want to use for testing purposes
+	 */
+	
+	public function search($options = null){
+		$search = new OCLCSearch($options);
+			
+		$search->setRequest_url(static::buildRequestURL(__FUNCTION__, null, $search->getRequestParameters()));
+		
+		$headers = array(
+				'Accept' => $search->getAcceptType(),
+		);
+		
+		$search->setAuthHeader(static::buildAuthorizationHeader($whatObject, $method, $request_url));
+		
+		if (in_array('HMAC', static::$supportedAuthenticationMethods) || in_array('AccessToken', static::$supportedAuthenticationMethods)){
+			$headers['Authorization'] = $search->getAuthHeader();
+		}
+		
+		$search->setHeaders($headers);
+		
+		$httpOptions = array(
+				'mockResponseFilePath' => $search->getMockResponseFilePath()
+		);
+		
+		return $search->parseSearchResponse(static::makeHTTPRequest($search->getMethod(), $search->getRequest_url(), $search->getHeaders(), $httpOptions));
+	}
+	
+	/**
 	 * Parse options into object properties
 	 * @param array $options
+	 * - wskey: an WSKey object with a key and secret
+	 * - accessToken: an AccessToken object
+	 * - user: a user object
+	 * - parameters: an array of query parameters
+	 * - acceptType: the media type to send in the HTTP Accept Header. eg. application/json, application/atom+xml
+	 * - mockResponseFilePath: the file path to a mock response you want to use for testing purposes
 	 */
 	protected function parseOptions($options) {
 		
@@ -378,6 +425,8 @@ Class Resource
 		libxml_clear_errors();
 		if ($isXML) {
 			self::from_xml($response->getBody(true));
+		} else {
+			self:from_json($response->getBody(true));
 		}
 	}
 	
@@ -415,131 +464,6 @@ Class Resource
 				$this->errorDetail = (string)$detail[0];
 			}
 		}
-	}
-	
-	/**
-	 * 
-	 * @param \OCLC\Search $search
-	 * @param unknown $response
-	 * @return \OCLC\Search
-	 */
-	protected static function parseSearchResponse($search, $response) {
-		if (!is_a($response, '\Guzzle\Http\Exception\BadResponseException')) {
-			$search->setResponseSuccessful($response->isSuccessful());
-			$search->setResponseCode($response->getStatusCode());
-			$search->setResponseBody($response->getBody(true));
-			$etag = $response->getETag();
-			if (!empty($etag)){
-				$search->setEtag($etag);
-			}
-			// figure out if it is Atom or not based on namespaces
-			$results = simplexml_load_string($search->getResponseBody());
-			$namespaces = $results->getNamespaces(true);
-		  
-			if (in_array('http://www.loc.gov/zing/srw/', $namespaces)) {
-				static::parseSRUResponse($results, $search);
-			} else {
-				static::parseAtomFeed($results, $search);
-			}
-	
-		} else {
-			$search->setResponseCode($response->getResponse()->getStatusCode());
-			$search->setResponseBody($response->getResponse()->getBody(true));
-		}
-	
-		return $search;
-	}
-	
-	/**
-	 * Parse the information in the Atom Feed and add each entry as an object into a result set array within the \OCLC\Search object
-	 * @param \SimpleXMLElement $results
-	 * @param \OCLC\Search $search_response
-	 */
-	
-	protected static function parseAtomFeed($results, $search_response) {
-		$results->registerXPathNamespace("atom", "http://www.w3.org/2005/Atom");
-		$results->registerXPathNamespace("os", "http://a9.com/-/spec/opensearch/1.1/");
-			
-		// want an array of resource objects with their XML
-		$entries = array();
-		foreach ($results->xpath('/atom:feed/atom:entry') as $entry) {
-			// create a new resource using class name
-			$class = get_called_class();
-			$resource = new $class;
-			$resource->from_xml($entry->saveXML());
-			$entries[] = $resource;
-		}
-		$search_response->setResultSet($entries);
-			
-		// set the currentPage
-		$currentPage = $results->xpath('/atom:feed/os:startIndex');
-		$search_response->setCurrentPage((string)$currentPage[0]);
-		//set the total results
-		$totalResults = $results->xpath('/atom:feed/os:totalResults');
-		$search_response->setTotalResults((string)$totalResults[0]);
-		// set the items per page
-		$itemsPerPage = $results->xpath('/atom:feed/os:itemsPerPage');
-		if ((string)$totalResults[0]  == 0) {
-			$itemsPerPage = 0;
-			$totalPages = 0;
-		} elseif((string)$totalResults[0] < (string)$itemsPerPage[0]) {
-			$itemsPerPage = (string)$totalResults[0];
-			$totalPages = 1;
-		} else {
-			$totalPages = (string)$totalResults[0] /(string)$itemsPerPage[0];
-			$itemsPerPage = (string)$itemsPerPage[0];
-		}
-		$search_response->setItemsPerPage((string)$itemsPerPage[0]);
-		// calculate and set the total # of pages
-		$search_response->setTotalPages($totalPages);
-	}
-	
-	/**
-	 * Parse the information in the SRU response and add each record as an object into a result set array the \OCLC\Search object
-	 * @param \SimpleXMLElement $results
-	 * @param \OCLC\Search $search_response
-	 */
-	
-	protected static function parseSRUResponse($results, $search_response) {
-		$results->registerXPathNamespace("sru", "http://www.loc.gov/zing/srw/");
-		// want an array of resource objects with their XML
-		$records = array();
-		foreach ($results->xpath('//sru:record/sru:recordData') as $record) {
-			$class = get_called_class();
-			$resource = new $class;
-			$resource->from_xml($record->saveXML());
-			$records[] = $resource;
-		}
-		$search_response->setResultSet($records);
-			
-		// set the currentPage
-		$currentPage = $results->xpath('//sru:startRecord');
-		if (count($currentPage) > 0) {
-			$search_response->setCurrentPage((string)$currentPage[0]);
-		}
-		//set the total results
-		$totalResults = $results->xpath('//sru:numberOfRecords');
-		$search_response->setTotalResults((string)$totalResults[0]);
-	
-		// set the items per page
-		$itemsPerPage = $results->xpath('//sru:maximumRecords');
-	
-		if ((string)$totalResults[0] == 0) {
-			$itemsPerPage = 0;
-			$totalPages = 0;
-		} elseif(count($itemsPerPage) > 0 && (string)$totalResults[0] < (string)$itemsPerPage[0]) {
-			$itemsPerPage = (string)$totalResults[0];
-			$totalPages = 1;
-		} elseif (count($itemsPerPage) > 0) {
-			$totalPages = (string)$totalResults[0] /(string)$itemsPerPage[0];
-			$itemsPerPage = (string)$itemsPerPage[0];
-		} elseif ((string)$totalResults[0] == 1) {
-			$itemsPerPage = 1;
-			$totalPages = 1;
-		}
-		$search_response->setItemsPerPage($itemsPerPage);
-		// calculate and set the total # of pages
-		$search_response->setTotalPages($totalPages);
 	}
 	
 	/**

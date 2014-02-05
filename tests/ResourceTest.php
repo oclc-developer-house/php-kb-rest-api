@@ -1,6 +1,4 @@
 <?php
-require('/Users/coombsk/Documents/workspace/code_libraries/oclc-auth.phar');
-require('/Users/coombsk/git/php-kb-rest-api/src/Resource.php');
 
 class ResourceTest extends PHPUnit_Framework_TestCase {
 
@@ -10,10 +8,10 @@ class ResourceTest extends PHPUnit_Framework_TestCase {
 		Resource::$dataURLsyntax = false;
 		Resource::$supportedAuthenticationMethods = array('WSKeyLite');
 	}
-	public function testConstructorWithID() {
+	public function testConstructorWithIDXML() {
 		$options = array(
 			'parameters' => array('wskey' => 'myKey'),
-			'mockResponseFilePath' => __DIR__ . '/mocks/200.txt'
+			'mockResponseFilePath' => __DIR__ . '/mocks/XML/200.txt'
 		);
 		$resource = new Resource('123', $options);
 		
