@@ -426,7 +426,7 @@ Class Resource
 		if ($isXML) {
 			self::from_xml($response->getBody(true));
 		} else {
-			self:from_json($response->getBody(true));
+			self::from_json($response->getBody(true));
 		}
 	}
 	
@@ -463,6 +463,11 @@ Class Resource
 			if (isset($detail[0])){
 				$this->errorDetail = (string)$detail[0];
 			}
+		} else {
+			$errors = json_decode($this->responseBody);
+			$code = $errors[''];
+			$message = $errors[''];
+			$detail = $errors[''];
 		}
 	}
 	
@@ -489,7 +494,7 @@ Class Resource
 					$this->eTag = (string)$gd['etag'];
 				}
 			}
-			$this->atomTitle = (string)$entry->title ;
+			$this->atomTitle = (string)$entry->title;
 			$this->atomLink = $entry->link['href'];
 			if (count($entry->xpath('//content/child::*')) > 0) {
 				$doc = $entry->xpath('//content/child::*');
@@ -497,22 +502,40 @@ Class Resource
 				$entry->registerXPathNamespace('atom', 'http://www.w3.org/2005/Atom');
 				$doc = $entry->xpath('//atom:content/child::*');
 			}
-			if (is_array($doc)) {
-				$doc = $doc[0];
+			if (isset($doc[0])) {
+				$this->from_doc($doc[0]->asXML());
 			}
-			$this->doc = $doc->asXML();
-			// parse any Atom error
-			if (isset($namespaces['oclc'])) {
-				$oclc = $entry->children($namespaces['oclc']);
-				$this->setErrorCode($oclc->error->code);
-				$this->setErrorMessage($oclc->error->message);
-				$this->setErrorDetail($oclc->error->detail);
-			}
-			$this->from_doc();
+			
 		} else {
-			$this->doc = $response;
-			$this->from_doc();
+			$this->from_doc($response);
 		}
+	}
+	
+	protected function from_json($response){
+		$this->responseBody = $response;
+		$json_atom = json_decode($this->responseBody, true);
+		
+		if (isset($json_atom['id'])) {
+			if (isset($json_atom['etag'])){
+				$this->eTag = $json_atom['etag'];
+			}
+			$this->atomTitle = $json_atom['title'];
+			foreach ($json_atom['links'] as $link) {
+				if ($link['rel'] == 'self') {
+					$this->atomLink = $link['href'];
+				}
+			}
+			if (isset($json_atom['content'])){
+				$doc = $json_atom['content'];
+				$this->from_doc($doc);
+			}
+		} else {
+			$this->from_doc($response);
+		}
+	}
+	
+	protected function from_doc($doc){
+		$this->doc = $doc;
 	}
 }
 
