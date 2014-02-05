@@ -14,7 +14,7 @@ class Search
 	 * @var \OCLC\User $user an /OCLC/User object which contains a valid principalID, principalIDNS and institution ID for a user
 	 * @method string $method
 	 * @var array $requestParameters
-	 * @var string $request_url
+	 * @var string $requestUrl
 	 * @var string $headers
 	 * @var string $acceptType
 	 * @var string $mockResponseFilePath
@@ -39,7 +39,7 @@ class Search
     
     protected $method = 'GET';
     protected $requestParameters = null;
-    protected $request_url = null;
+    protected $requestUrl = null;
     protected $headers = null;
     
     protected $acceptType = 'application/atom+xml';
@@ -145,7 +145,7 @@ class Search
 	 * @param unknown $response
 	 * @return \OCLC\Search
 	 */
-	public function parseSearchResponse($response) {
+	public function parseSearchResponse($response, $class) {
 		if (!is_a($response, '\Guzzle\Http\Exception\BadResponseException')) {
 			$this->responseOk = $response->isSuccessful();
 			$this->responseCode = $response->getStatusCode();
@@ -159,9 +159,9 @@ class Search
 			$namespaces = $results->getNamespaces(true);
 	
 			if (in_array('http://www.loc.gov/zing/srw/', $namespaces)) {
-				static::parseSRUResponse($results, $search);
+				static::parseSRUResponse($results, $class);
 			} else {
-				self::parseAtomFeed($results);
+				self::parseAtomFeed($results, $class);
 			}
 	
 		} else {

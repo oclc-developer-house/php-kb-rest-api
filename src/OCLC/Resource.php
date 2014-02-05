@@ -204,7 +204,8 @@ Class Resource
 				'mockResponseFilePath' => $search->getMockResponseFilePath()
 		);
 
-		return $search->parseSearchResponse(static::makeHTTPRequest($search->getMethod(), $search->getRequestUrl(), $search->getHeaders(), $httpOptions), get_called_class());
+		$search->parseSearchResponse(static::makeHTTPRequest($search->getMethod(), $search->getRequestUrl(), $search->getHeaders(), $httpOptions), get_called_class());
+		return $search;
 	}
 
 	/**

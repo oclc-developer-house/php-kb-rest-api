@@ -96,14 +96,75 @@ class ResourceTest extends PHPUnit_Framework_TestCase {
 		//$this->assertAttributeNotEmpty('doc', $resource);
 	}
 	
-	public function testSearch(){
+	public function testSearchXML(){
 		$options = array(
-				'parameters' => array('wskey' => 'myKey', 'institution_id' => 128807),
+				'parameters' => array('wskey' => 'myKey', 'institution_id' => '128807'),
 				'mockResponseFilePath' => __DIR__ . '/mocks/XML/Search200.txt'
 		);
 		$searchResults = Resource::search($options);
-		$this->assertAttributeEquals('http://worldcat.org/webservices/kb/rest/settings/search?wskey=myKey&institution_id=128807', 'requestUrl', $searchResults);
 		
+		// make sure the parameters are set
+		$this->assertAttributeNotEmpty('requestParameters', $searchResults);
+		$parameters = $searchResults->getRequestParameters();
+		$this->assertEquals('myKey', $parameters['wskey']);
+		$this->assertEquals('128807', $parameters['institution_id']);
+		
+		$this->assertAttributeEquals('http://worldcat.org/webservices/kb/rest/settings?wskey=myKey&institution_id=128807', 'requestUrl', $searchResults);
+		//make sure mockResponseFilePath is set
+		$this->assertAttributeEquals(__DIR__ . '/mocks/XML/Search200.txt', 'mockResponseFilePath', $searchResults);
+		
+		//make sure the HTTP request returns a 200
+		$this->assertAttributeEquals('200', 'responseCode', $searchResults);
+		$this->assertAttributeNotEmpty('responseBody', $searchResults);
+		$this->assertAttributeEmpty('errorCode', $searchResults);		
+	}
+	
+	/**
+	 * @depends testSearchXML
+	 */
+	public function testParseSearchXML($searchResults){
+		$this->assertAttributeNotEmpty('totalResults', $searchResults);
+		$this->assertAttributeNotEmpty('totalPages', $searchResults);
+		$this->assertAttributeNotEmpty('currentPage', $searchResults);
+		$this->assertAttributeNotEmpty('itemsPerPage', $searchResults);
+	}
+	
+	public function testSearchJSON(){
+		$options = array(
+				'parameters' => array('wskey' => 'myKey',
+				'institution_id' => '128807',
+				'alt' => 'json'
+				),
+				'acceptType' => 'application/json',
+				'mockResponseFilePath' => __DIR__ . '/mocks/XML/Search200.txt'
+		);
+		$searchResults = Resource::search($options);
+	
+		// make sure the parameters are set
+		$this->assertAttributeNotEmpty('requestParameters', $searchResults);
+		$parameters = $searchResults->getRequestParameters();
+		$this->assertEquals('myKey', $parameters['wskey']);
+		$this->assertEquals('128807', $parameters['institution_id']);
+	
+		$this->assertAttributeEquals('http://worldcat.org/webservices/kb/rest/settings?wskey=myKey&institution_id=128807', 'requestUrl', $searchResults);
+		//make sure mockResponseFilePath is set
+		$this->assertAttributeEquals(__DIR__ . '/mocks/XML/Search200.txt', 'mockResponseFilePath', $searchResults);
+	
+		//make sure the HTTP request returns a 200
+		$this->assertAttributeEquals('200', 'responseCode', $searchResults);
+		$this->assertAttributeNotEmpty('responseBody', $searchResults);
+		$this->assertAttributeEmpty('errorCode', $searchResults);
+		return $searchResults;
+	}
+	
+	/**
+	 * @depends testSearchJSON
+	 */
+	public function testParseSearchJSON($searchResults){
+		$this->assertAttributeNotEmpty('totalResults', $searchResults);
+		$this->assertAttributeNotEmpty('totalPages', $searchResults);
+		$this->assertAttributeNotEmpty('currentPage', $searchResults);
+		$this->assertAttributeNotEmpty('itemsPerPage', $searchResults);
 		
 	}
 	
