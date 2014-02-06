@@ -498,6 +498,9 @@ Class Resource
 					$this->eTag = (string)$gd['etag'];
 				}
 			}
+			if (empty($this->id)){
+				$this->id = (string)$entry->id;
+			}
 			$this->atomTitle = (string)$entry->title;
 			$this->atomLink = $entry->link['href'];
 			if (count($entry->xpath('//content/child::*')) > 0) {
@@ -522,6 +525,9 @@ Class Resource
 		if (isset($json_atom['id'])) {
 			if (isset($json_atom['etag'])){
 				$this->eTag = $json_atom['etag'];
+			}
+			if (empty($this->id)){
+				$this->id = $json_atom['id'];
 			}
 			$this->atomTitle = $json_atom['title'];
 			foreach ($json_atom['links'] as $link) {

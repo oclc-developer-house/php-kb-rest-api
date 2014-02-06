@@ -146,36 +146,110 @@ class Search
 	 * @return \OCLC\Search
 	 */
 	public function parseSearchResponse($response, $class) {
-		if (!is_a($response, '\Guzzle\Http\Exception\BadResponseException')) {
-			$this->responseOk = $response->isSuccessful();
-			$this->responseCode = $response->getStatusCode();
-			$this->responseBody = $response->getBody(true);
-			$etag = $response->getETag();
-			if (!empty($etag)){
-				$this->etag($etag);
-			}
-			// figure out if it is Atom or not based on namespaces
-			$results = simplexml_load_string($this->responseBody);
-			$namespaces = $results->getNamespaces(true);
-	
-			if (in_array('http://www.loc.gov/zing/srw/', $namespaces)) {
-				static::parseSRUResponse($results, $class);
-			} else {
-				self::parseAtomFeed($results, $class);
-			}
-	
+	if (!is_a($response, '\Guzzle\Http\Exception\BadResponseException')) {
+			self::parseSuccess($response, $class);
 		} else {
-			$this->responseCode = $response->getResponse()->getStatusCode();
-			$this->responseBody = $response->getResponse()->getBody(true);
+			self::parseError($response->getResponse(), $class);
 		}
 	}
+	
+	/**
+	 * Parse the Guzzle Response into properties for successes
+	 * @param unknown $response
+	 */
+	
+	protected function parseSuccess($response, $class) {
+		$this->responseCode = $response->getStatusCode();
+		$this->responseBody = $response->getBody(true);
+		$this->responseSuccessful = true;
+		$etag = $response->getETag();
+		if (isset($etag)) {
+			$this->eTag = $etag;
+		}
+			
+		//check to see if it is XML or not
+		libxml_use_internal_errors(true);
+		simplexml_load_string($response->getBody(true));
+			
+		if (empty($this->responseBody) || count(libxml_get_errors()) > 0) {
+			$isXML = FALSE;
+		} else {
+			$isXML = TRUE;
+		}
+		libxml_clear_errors();
+		if ($isXML) {
+			self::from_xml($response->getBody(true), $class);
+		} else {
+			self::from_json($response->getBody(true), $class);
+		}
+	}
+	
+	/**
+	 * Parse the Guzzle Response into properties for errors
+	 * @param \Guzzle\Http\Response $response
+	 */
+	
+	protected function parseError($response, $class){
+		$this->responseCode = $response->getStatusCode();
+		$this->responseBody = $response->getBody(true);
+		//check to see if it is XML or not
+		libxml_use_internal_errors(true);
+		simplexml_load_string($response->getBody(true));
+			
+		if (empty($this->responseBody) || count(libxml_get_errors()) > 0) {
+			$isXML = FALSE;
+		} else {
+			$isXML = TRUE;
+		}
+		libxml_clear_errors();
+		if ($isXML) {
+			$errors = simplexml_load_string($this->responseBody);
+			$errors->registerXPathNamespace("oclc", "http://worldcat.org/xmlschemas/response");
+			$code = $errors->xpath('//oclc:code');
+			$message = $errors->xpath('//oclc:message');
+			$detail = $errors->xpath('//oclc:detail');
+			if (isset($code[0])) {
+				$this->errorCode = (string)$code[0];
+			}
+			if (isset($message[0])){
+				$this->errorMessage = (string)$message[0];
+			}
+			if (isset($detail[0])){
+				$this->errorDetail = (string)$detail[0];
+			}
+		} else {
+			$errors = json_decode($this->responseBody);
+			$this->errorCode = $errors['error'][0]['code'];
+			$this->errorMessage = $errors['error'][0]['message'];
+			$this->errorDetail = $errors['error'][0]['detail'];
+		}
+	}
+	
+	/**
+	 * 
+	 * @param string $responseBody
+	 * @param string $class
+	 */
+	protected function from_xml($responseBody, $class)
+	{
+		if (empty($this->responseBody)){
+			$this->responseBody = $responseBody;
+		}
+		$results = simple_xml_load($this->responseBody);
+		if ($results->getName() == 'feed') {
+			self::parseAtomFeedXML($results, $class);
+		} else {
+			self::parseSRUResponse($results, $class);	
+		}
+	}
+	
 	
 	/**
 	 * Parse the information in the Atom Feed and add each entry as an object into a result set array within the \OCLC\Search object
 	 * @param \SimpleXMLElement $results
 	 */
 	
-	protected function parseAtomFeed($results, $class) {
+	protected function parseAtomFeedXML($results, $class) {
 		$results->registerXPathNamespace("atom", "http://www.w3.org/2005/Atom");
 		$results->registerXPathNamespace("os", "http://a9.com/-/spec/opensearch/1.1/");
 			
@@ -256,5 +330,48 @@ class Search
 		$search_response->setItemsPerPage($itemsPerPage);
 		// calculate and set the total # of pages
 		$search_response->setTotalPages($totalPages);
+	}
+	
+	protected function from_json($responseBody, $class){
+		if (empty($this->responseBody)){
+			$this->responseBody = $responseBody;
+		}
+		$results = json_decode($this->responseBody, true);
+		self::parseAtomFeedJSON($results, $class);
+	}
+	
+	protected function parseAtomFeedJSON($results, $class) {
+		
+		//This needs more work!!
+			
+		// want an array of resource objects with their JSON
+		$entries = array();
+		foreach ($results['entry'] as $entry) {
+			// create a new resource using class name
+			$resource = new $class();
+			$resource->from_json($entry->saveXML());
+			$entries[] = $resource;
+		}
+		$this->resultSet = $entries;
+			
+		// set the currentPage
+		$this->currentPage = $results['os:startIndex'];
+		//set the total results
+		$this->totalResults = $results['os:totalResults'];
+		// set the items per page
+		$itemsPerPage = $results['os:itemsPerPage'];
+		if ((string)$totalResults  == 0) {
+			$itemsPerPage = 0;
+			$totalPages = 0;
+		} elseif((string)$totalResults < (string)$itemsPerPage) {
+			$itemsPerPage = (string)$totalResults;
+			$totalPages = 1;
+		} else {
+			$totalPages = (string)$totalResults /(string)$itemsPerPage;
+			$itemsPerPage = (string)$itemsPerPage;
+		}
+		$this->itemsPerPage = (string)$itemsPerPage;
+		// calculate and set the total # of pages
+		$this->totalPages = $totalPages;
 	}
 }

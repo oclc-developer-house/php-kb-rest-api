@@ -116,7 +116,9 @@ class ResourceTest extends PHPUnit_Framework_TestCase {
 		//make sure the HTTP request returns a 200
 		$this->assertAttributeEquals('200', 'responseCode', $searchResults);
 		$this->assertAttributeNotEmpty('responseBody', $searchResults);
-		$this->assertAttributeEmpty('errorCode', $searchResults);		
+		$this->assertAttributeEmpty('errorCode', $searchResults);
+
+		return $searchResults;
 	}
 	
 	/**
@@ -165,6 +167,9 @@ class ResourceTest extends PHPUnit_Framework_TestCase {
 		$this->assertAttributeNotEmpty('totalPages', $searchResults);
 		$this->assertAttributeNotEmpty('currentPage', $searchResults);
 		$this->assertAttributeNotEmpty('itemsPerPage', $searchResults);
+		$this->assertAttributeNotEmpty('resultSet', $searchResults);
+		$resultSet = $searchResults->getResultSet();
+		$this->assertAttributeNotEmpty('id', $resultSet[0]);
 		
 	}
 	
