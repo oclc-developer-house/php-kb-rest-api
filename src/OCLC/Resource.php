@@ -428,9 +428,9 @@ Class Resource
 		}
 		libxml_clear_errors();
 		if ($isXML) {
-			self::from_xml($response->getBody(true));
+			$this->from_xml($response->getBody(true));
 		} else {
-			self::from_json($response->getBody(true));
+			$this->from_json($response->getBody(true));
 		}
 	}
 
